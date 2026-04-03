@@ -96,3 +96,64 @@ func (repositorio usuarios) BuscarPorID(ID uint64) (modelos.Usuario, error) {
 
 	return usuario, nil
 }
+
+// Atualizar altera as informações de um usuario no banco de dados
+func (repositorio usuarios) Atualizar(ID uint64, usuario modelos.Usuario) error {
+	statement, erro := repositorio.db.Prepare(
+		"update usuarios set nome = $1, nick = $2, email = $3 where id = $4",
+	)
+
+	if erro != nil {
+		return erro
+	}
+
+	defer statement.Close()
+
+	if _, erro = statement.Exec(usuario.Nome, usuario.Nick, usuario.Email, ID); erro != nil {
+		return erro
+	}
+
+	return nil
+}
+
+// Deletar exclui as informacoes de um usuario no banco de dados
+func (repositorio usuarios) Deletar(ID uint64) error {
+	statement, erro := repositorio.db.Prepare(
+		"delete from usuarios where id = $1",
+	)
+
+	if erro != nil {
+		return erro
+	}
+
+	defer statement.Close()
+
+	if _, erro = statement.Exec(ID); erro != nil {
+		return erro
+	}
+
+	return nil
+}
+
+// BuscarPorEmail busca um usuario pelo email e retorna seu id e senha com hash
+func (repositorio usuarios) BuscarPorEmail(email string) (modelos.Usuario, error) {
+	linha, erro := repositorio.db.Query(
+		"select id, senha from usuarios where email = $1", email,
+	)
+
+	if erro != nil {
+		return modelos.Usuario{}, erro
+	}
+
+	defer linha.Close()
+
+	var usuario modelos.Usuario
+
+	if linha.Next() {
+		if erro = linha.Scan(&usuario.ID, &usuario.Senha); erro != nil {
+			return modelos.Usuario{}, erro
+		}
+	}
+
+	return usuario, nil
+}
