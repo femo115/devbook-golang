@@ -16,3 +16,27 @@ CREATE TABLE usuarios (
 
 -- Comentário opcional para documentação na interface do pgAdmin
 COMMENT ON TABLE usuarios IS 'Tabela para armazenar dados dos usuários do sistema devbook';
+
+DROP TABLE IF EXISTS seguidores;
+
+CREATE TABLE seguidores (
+    usuario_id INT NOT NULL,
+    seguidor_id INT NOT NULL,
+    
+    -- Chaves Estrangeiras (Foreign Keys)
+    CONSTRAINT fk_usuario 
+        FOREIGN KEY (usuario_id) 
+        REFERENCES usuarios(id) 
+        ON DELETE CASCADE,
+        
+    CONSTRAINT fk_seguidor 
+        FOREIGN KEY (seguidor_id) 
+        REFERENCES usuarios(id) 
+        ON DELETE CASCADE,
+
+    -- Chave Primária Composta
+    PRIMARY KEY (usuario_id, seguidor_id)
+);
+
+-- Comentário opcional para documentação na interface do pgAdmin
+COMMENT ON TABLE seguidores IS 'Tabela para armazenar dados dos seguidores de um usuario do sistema devbook';
