@@ -2,6 +2,8 @@
 -- USE devbook;
 
 -- Remove a tabela se ela já existir para evitar erros em re-execuções
+DROP TABLE IF EXISTS publicacoes;
+DROP TABLE IF EXISTS seguidores;
 DROP TABLE IF EXISTS usuarios;
 
 -- Criação da tabela com sintaxe nativa PostgreSQL
@@ -16,8 +18,6 @@ CREATE TABLE usuarios (
 
 -- Comentário opcional para documentação na interface do pgAdmin
 COMMENT ON TABLE usuarios IS 'Tabela para armazenar dados dos usuários do sistema devbook';
-
-DROP TABLE IF EXISTS seguidores;
 
 CREATE TABLE seguidores (
     usuario_id INT NOT NULL,
@@ -40,3 +40,20 @@ CREATE TABLE seguidores (
 
 -- Comentário opcional para documentação na interface do pgAdmin
 COMMENT ON TABLE seguidores IS 'Tabela para armazenar dados dos seguidores de um usuario do sistema devbook';
+
+CREATE TABLE publicacoes (
+    id SERIAL PRIMARY KEY,
+    titulo VARCHAR(50) NOT NULL,
+    conteudo VARCHAR(300) NOT NULL,
+    
+    autor_id INT NOT NULL,
+    CONSTRAINT fk_autor
+        FOREIGN KEY (autor_id)
+        REFERENCES usuarios(id)
+        ON DELETE CASCADE,
+
+    curtidas INT DEFAULT 0,
+    criada_em TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE publicacoes IS 'Tabela para armazenar as publicacoes dos usuarios';
