@@ -117,9 +117,104 @@ func (repositorio publicacoes) Atualizar(publicacaoID uint64, publicacao modelos
 	}
 	defer statement.Close()
 
-	if  _, erro = statement.Exec(publicacao.Titulo,publicacao.Conteudo, publicacaoID); erro != nil {
+	if _, erro = statement.Exec(publicacao.Titulo, publicacao.Conteudo, publicacaoID); erro != nil {
 		return erro
 	}
-	
+
+	return nil
+}
+
+// Deletar exclui uma publicacao no banco de dados
+func (repositorio publicacoes) Deletar(publicacaoID uint64) error {
+	statment, erro := repositorio.db.Prepare(
+		"delete from publicacoes where id = $1",
+	)
+	if erro != nil {
+		return erro
+	}
+
+	defer statment.Close()
+
+	if _, erro = statment.Exec(publicacaoID); erro != nil {
+		return erro
+	}
+
+	return nil
+}
+
+// BuscarPorUsuario traz todas as publicacoes de um usuario especifico
+func (repositorio publicacoes) BuscarPorUsuario(usuarioID uint64) ([]modelos.Publicacao, error) {
+	linhas, erro := repositorio.db.Query(`
+		select p.*, u.nick from publicacoes p
+		 inner join usuarios u
+		    on u.id = p.autor_id
+		 where p.autor_id = $1`,
+		usuarioID,
+	)
+	if erro != nil {
+		return nil, erro
+	}
+	defer linhas.Close()
+
+	var publicacoes []modelos.Publicacao
+
+	for linhas.Next() {
+		var publicacao modelos.Publicacao
+
+		if erro = linhas.Scan(
+			&publicacao.ID,
+			&publicacao.Titulo,
+			&publicacao.Conteudo,
+			&publicacao.AutorID,
+			&publicacao.Curtidas,
+			&publicacao.CriadaEm,
+			&publicacao.AutorNick,
+		); erro != nil {
+			return nil, erro
+		}
+
+		publicacoes = append(publicacoes, publicacao)
+	}
+
+	return publicacoes, nil
+}
+
+// Curtir adiciona uma curtida na publicacao
+func (repositorio publicacoes) Curtir(publicacaoID uint64) error {
+	statment, erro := repositorio.db.Prepare(
+		"update publicacoes set curtidas = curtidas + 1 where id = $1",
+	)
+	if erro != nil {
+		return erro
+	}
+	defer statment.Close()
+
+	if _, erro = statment.Exec(publicacaoID); erro != nil {
+		return erro
+	}
+
+	return nil
+}
+
+// Descurtir subtrai uma curtida na publicacao
+func (repositorio publicacoes) Descurtir(publicacaoID uint64) error {
+	statment, erro := repositorio.db.Prepare(`
+		update publicacoes 
+		   set curtidas = case 
+		                       when curtidas > 0 then curtidas - 1 
+							   else 0 
+						   end
+		 where id = $1
+		`,
+	)
+	if erro != nil {
+		return erro
+	}
+	defer statment.Close()
+
+	if _, erro = statment.Exec(publicacaoID); erro != nil {
+		return erro
+	}
+
 	return nil
 }
